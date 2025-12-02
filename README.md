@@ -7,3 +7,5 @@
 - Secure API endpoint verification
 
 - Key management checkpoint: 22:06
+
+- ECDSA/ECDH protocol hardening
