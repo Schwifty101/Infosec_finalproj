@@ -314,10 +314,11 @@ export async function verifyMessageHMAC(
  * @returns Promise<number> - Next sequence number to use
  */
 export async function getNextSequenceNumber(
-  conversationId: string
+  conversationId: string,
+  senderId: string
 ): Promise<number> {
   try {
-    const response = await fetch(`/api/messages/sequence/${conversationId}`);
+    const response = await fetch(`/api/messages/sequence/${conversationId}?senderId=${encodeURIComponent(senderId)}`);
 
     if (!response.ok) {
       console.error('Failed to fetch sequence number from server');

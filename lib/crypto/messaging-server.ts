@@ -20,7 +20,8 @@ import { Collections } from '@/lib/db/models';
  * @returns Promise<number> - Next sequence number to use
  */
 export async function getNextSequenceNumber(
-  conversationId: string
+  conversationId: string,
+  senderId?: string
 ): Promise<number> {
   try {
     const db = await getDatabase();
@@ -34,9 +35,35 @@ export async function getNextSequenceNumber(
     }
     const [userId1, userId2] = parts;
 
-    console.log(`🔍 getNextSequenceNumber: Looking for messages between ${userId1} and ${userId2}`);
+    // If senderId provided, get sequence for specific sender
+    // Otherwise, get overall conversation sequence (for backward compatibility)
+    if (senderId) {
+      console.log(`🔍 getNextSequenceNumber: Looking for messages from ${senderId} in conversation ${conversationId}`);
 
-    // Find latest message in conversation (from either direction)
+      const latestMessage = await messagesCollection
+        .findOne(
+          {
+            senderId: senderId,
+            $or: [
+              { receiverId: userId1 },
+              { receiverId: userId2 },
+            ],
+          },
+          { sort: { sequenceNumber: -1 } }
+        );
+
+      if (!latestMessage || latestMessage.sequenceNumber === undefined) {
+        console.log(`🔍 getNextSequenceNumber: No messages from ${senderId}, returning 1`);
+        return 1;
+      }
+
+      console.log(`🔍 getNextSequenceNumber: Found message from ${senderId} with seq=${latestMessage.sequenceNumber}, returning ${latestMessage.sequenceNumber + 1}`);
+      return latestMessage.sequenceNumber + 1;
+    }
+
+    // Legacy: Get conversation-wide sequence (deprecated)
+    console.log(`🔍 getNextSequenceNumber: Looking for messages in conversation ${conversationId}`);
+
     const latestMessage = await messagesCollection
       .findOne(
         {
@@ -50,7 +77,6 @@ export async function getNextSequenceNumber(
 
     if (!latestMessage || latestMessage.sequenceNumber === undefined) {
       console.log(`🔍 getNextSequenceNumber: No messages found, returning 1`);
-      // First message in conversation
       return 1;
     }
 
@@ -58,7 +84,6 @@ export async function getNextSequenceNumber(
     return latestMessage.sequenceNumber + 1;
   } catch (error) {
     console.error('Failed to get sequence number:', error);
-    // Default to 1 if error
     return 1;
   }
 }
@@ -88,26 +113,28 @@ export async function getLastSequenceNumber(
     }
     const [userId1, userId2] = parts;
 
-    console.log(`🔍 getLastSequenceNumber: Looking for messages between ${userId1} and ${userId2}`);
+    console.log(`🔍 getLastSequenceNumber: Looking for messages from ${senderId} in conversation ${conversationId}`);
 
-    // Find latest message in this conversation (from either sender)
+    // Find latest message from THIS SENDER in this conversation
+    // Each sender has their own sequence counter
     const latestMessage = await messagesCollection
       .findOne(
         {
+          senderId: senderId,
           $or: [
-            { senderId: userId1, receiverId: userId2 },
-            { senderId: userId2, receiverId: userId1 },
+            { receiverId: userId1 },
+            { receiverId: userId2 },
           ],
         },
         { sort: { sequenceNumber: -1 } }
       );
 
     if (!latestMessage || latestMessage.sequenceNumber === undefined) {
-      console.log(`🔍 getLastSequenceNumber: No messages found, returning 0`);
-      return 0; // No messages yet
+      console.log(`🔍 getLastSequenceNumber: No messages from ${senderId} found, returning 0`);
+      return 0; // No messages yet from this sender
     }
 
-    console.log(`🔍 getLastSequenceNumber: Found message with seq=${latestMessage.sequenceNumber}`);
+    console.log(`🔍 getLastSequenceNumber: Found message from ${senderId} with seq=${latestMessage.sequenceNumber}`);
     return latestMessage.sequenceNumber;
   } catch (error) {
     console.error('Failed to get last sequence number:', error);

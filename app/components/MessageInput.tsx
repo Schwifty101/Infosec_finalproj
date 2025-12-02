@@ -102,8 +102,8 @@ export default function MessageInput({
         }
       }
 
-      // 3. Get sequence number
-      const sequenceNumber = await getNextSequenceNumber(conversationId);
+      // 3. Get sequence number (per-sender tracking)
+      const sequenceNumber = await getNextSequenceNumber(conversationId, currentUserId);
 
       // 4. Encrypt message
       const encrypted = await encryptMessage(trimmedText, sessionKey, sequenceNumber);

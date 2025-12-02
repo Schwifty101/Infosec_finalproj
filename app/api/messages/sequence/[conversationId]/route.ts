@@ -22,9 +22,20 @@ export async function GET(
       );
     }
 
-    const nextSequenceNumber = await getNextSequenceNumber(conversationId);
+    // Get senderId from query params (CRITICAL for per-sender sequence tracking)
+    const { searchParams } = new URL(request.url);
+    const senderId = searchParams.get('senderId');
 
-    console.log(`📊 Sequence query: conversationId=${conversationId}, nextSequenceNumber=${nextSequenceNumber}`);
+    if (!senderId) {
+      return NextResponse.json(
+        { success: false, message: 'Sender ID is required' },
+        { status: 400 }
+      );
+    }
+
+    const nextSequenceNumber = await getNextSequenceNumber(conversationId, senderId);
+
+    console.log(`📊 Sequence query: conversationId=${conversationId}, senderId=${senderId}, nextSequenceNumber=${nextSequenceNumber}`);
 
     return NextResponse.json({
       success: true,
