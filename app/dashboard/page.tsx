@@ -159,7 +159,7 @@ export default function DashboardPage() {
             </ul>
           </div>
 
-          <div>
+          <div style={{ marginBottom: '1.5rem' }}>
             <h4 style={{ marginBottom: '0.5rem', color: '#28a745' }}>✅ Phase 3: End-to-End Encrypted Messaging</h4>
             <ul style={{ marginLeft: '1.5rem', marginBottom: 0 }}>
               <li>AES-256-GCM message encryption with session keys</li>
@@ -171,19 +171,133 @@ export default function DashboardPage() {
               <li>Cursor-based pagination for message history</li>
             </ul>
           </div>
+
+          <div style={{ marginBottom: '1.5rem' }}>
+            <h4 style={{ marginBottom: '0.5rem', color: '#28a745' }}>✅ Phase 4: Encrypted File Sharing</h4>
+            <ul style={{ marginLeft: '1.5rem', marginBottom: 0 }}>
+              <li>AES-256-GCM file encryption with session keys</li>
+              <li>Chunked upload for large files (1MB chunks)</li>
+              <li>File metadata encryption (name, size, type)</li>
+              <li>Secure file download with decryption</li>
+              <li>File attachments in chat messages</li>
+            </ul>
+          </div>
+
+          <div>
+            <h4 style={{ marginBottom: '0.5rem', color: '#28a745' }}>✅ Phase 5: Security Logging & Attack Demos</h4>
+            <ul style={{ marginLeft: '1.5rem', marginBottom: 0 }}>
+              <li>Comprehensive security event logging</li>
+              <li>Admin log viewer with filtering</li>
+              <li>Replay attack demonstration & protection</li>
+              <li>MITM attack on unsigned DH (vulnerable)</li>
+              <li>MITM protection with AECDH-ECDSA (protected)</li>
+            </ul>
+          </div>
+        </div>
+
+        {/* Security Demonstrations */}
+        <div style={{ backgroundColor: '#f8d7da', border: '1px solid #dc3545', padding: '1.5rem', borderRadius: '8px', marginBottom: '2rem' }}>
+          <h3 style={{ marginTop: 0, color: '#721c24' }}>🔐 Security Demonstrations</h3>
+          <p style={{ color: '#721c24', marginBottom: '1rem' }}>
+            Interactive demonstrations showing attack scenarios and defenses
+          </p>
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.75rem' }}>
+            <button
+              onClick={() => router.push('/attack-demos')}
+              style={{
+                padding: '0.75rem 1.5rem',
+                fontSize: '1rem',
+                backgroundColor: '#dc3545',
+                color: 'white',
+                border: 'none',
+                borderRadius: '4px',
+                cursor: 'pointer',
+                fontWeight: 'bold',
+              }}
+            >
+              🛡️ Attack Demos
+            </button>
+            <button
+              onClick={() => router.push('/logs')}
+              style={{
+                padding: '0.75rem 1.5rem',
+                fontSize: '1rem',
+                backgroundColor: '#6c757d',
+                color: 'white',
+                border: 'none',
+                borderRadius: '4px',
+                cursor: 'pointer',
+                fontWeight: 'bold',
+              }}
+            >
+              📋 Security Logs
+            </button>
+          </div>
+        </div>
+
+        {/* Test Pages */}
+        <div style={{ backgroundColor: '#e2e3e5', border: '1px solid #6c757d', padding: '1.5rem', borderRadius: '8px', marginBottom: '2rem' }}>
+          <h3 style={{ marginTop: 0, color: '#383d41' }}>🧪 Test & Verification Pages</h3>
+          <p style={{ color: '#383d41', marginBottom: '1rem' }}>
+            Test pages for verifying cryptographic implementations
+          </p>
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.75rem' }}>
+            <button
+              onClick={() => router.push('/test-phase2')}
+              style={{
+                padding: '0.5rem 1rem',
+                fontSize: '0.9rem',
+                backgroundColor: '#6c757d',
+                color: 'white',
+                border: 'none',
+                borderRadius: '4px',
+                cursor: 'pointer',
+              }}
+            >
+              Phase 2 Tests
+            </button>
+            <button
+              onClick={() => router.push('/test-phase3')}
+              style={{
+                padding: '0.5rem 1rem',
+                fontSize: '0.9rem',
+                backgroundColor: '#6c757d',
+                color: 'white',
+                border: 'none',
+                borderRadius: '4px',
+                cursor: 'pointer',
+              }}
+            >
+              Phase 3 Tests
+            </button>
+            <button
+              onClick={() => router.push('/test-phase4')}
+              style={{
+                padding: '0.5rem 1rem',
+                fontSize: '0.9rem',
+                backgroundColor: '#6c757d',
+                color: 'white',
+                border: 'none',
+                borderRadius: '4px',
+                cursor: 'pointer',
+              }}
+            >
+              Phase 4 Tests
+            </button>
+          </div>
         </div>
 
         {/* Next Steps */}
-        <div style={{ backgroundColor: '#fff3cd', border: '1px solid #ffc107', padding: '1.5rem', borderRadius: '8px' }}>
-          <h3 style={{ marginTop: 0, color: '#856404' }}>Coming Next</h3>
-          <p style={{ color: '#856404', marginBottom: '0.5rem' }}>
-            <strong>Phase 4:</strong> Encrypted file sharing with chunked upload
+        <div style={{ backgroundColor: '#d4edda', border: '1px solid #28a745', padding: '1.5rem', borderRadius: '8px' }}>
+          <h3 style={{ marginTop: 0, color: '#155724' }}>✅ Project Complete</h3>
+          <p style={{ color: '#155724', marginBottom: '0.5rem' }}>
+            <strong>All 5 phases implemented:</strong> Authentication, Key Exchange, Messaging, File Sharing, Security Demos
           </p>
-          <p style={{ color: '#856404', marginBottom: '0.5rem' }}>
-            <strong>Phase 5:</strong> Security logging and monitoring dashboard
+          <p style={{ color: '#155724', marginBottom: '0.5rem' }}>
+            <strong>Remaining:</strong> STRIDE threat modeling documentation
           </p>
-          <p style={{ color: '#856404', marginBottom: 0 }}>
-            <strong>Phase 6+:</strong> Threat modeling, attack demonstrations, security analysis
+          <p style={{ color: '#155724', marginBottom: 0 }}>
+            <strong>Final:</strong> Demo video and project presentation
           </p>
         </div>
       </div>
