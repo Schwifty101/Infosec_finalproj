@@ -5,3 +5,5 @@
 - E2E encryption pipeline review
 
 - Secure API endpoint verification
+
+- Key management checkpoint: 22:06
