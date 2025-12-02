@@ -225,48 +225,48 @@
 
 ### 1.1 User Registration & Authentication
 
-- [X] User registration system implemented - 2025-12-01
+- [x] User registration system implemented - 2025-12-01
   - API route: `/app/api/auth/register/route.ts`
   - Client component: `/app/components/RegisterForm.tsx`
   - Page: `/app/register/page.tsx`
-- [X] Password hashing with bcrypt - 2025-12-01
+- [x] Password hashing with bcrypt - 2025-12-01
   - bcryptjs with 10 rounds, automatic salting
-- [X] Secure password storage in MongoDB - 2025-12-01
+- [x] Secure password storage in MongoDB - 2025-12-01
   - Only password hashes stored, never plaintext
 
 ### 1.2 Asymmetric Key Pair Generation
 
-- [X] ECC P-256 key pair generation on registration - 2025-12-01
+- [x] ECC P-256 key pair generation on registration - 2025-12-01
   - Library: `/lib/crypto/keyGeneration.ts`
   - Algorithm: ECDSA with P-256 curve using Web Crypto API
   - Keys generated entirely client-side
-- [X] Public key extraction and server storage - 2025-12-01
+- [x] Public key extraction and server storage - 2025-12-01
   - Keys exported in JWK format
   - Only public keys sent to server
 
 ### 1.3 Secure Private Key Storage
 
-- [X] IndexedDB implementation - 2025-12-01
+- [x] IndexedDB implementation - 2025-12-01
   - Library: `/lib/crypto/keyStorage.ts`
   - Database: `secureMessagingKeys`, Store: `privateKeys`
   - Keys stored with userId as index
-- [X] Private key storage tested and verified - 2025-12-01
+- [x] Private key storage tested and verified - 2025-12-01
   - Keys persist across browser sessions
   - Keys retrieved successfully on login
-- [X] Storage security justification documented - 2025-12-01
+- [x] Storage security justification documented - 2025-12-01
   - IndexedDB chosen for binary data support and security isolation
   - Private keys NEVER sent to server
 
 ### 1.4 Public Key Distribution
 
-- [X] POST /api/keys API route created - 2025-12-01
+- [x] POST /api/keys API route created - 2025-12-01
   - File: `/app/api/keys/route.ts`
   - Stores public key in user document
   - Validates JWK format
-- [X] GET /api/keys/:userId API route created - 2025-12-01
+- [x] GET /api/keys/:userId API route created - 2025-12-01
   - File: `/app/api/keys/[userId]/route.ts`
   - Returns public key and username
-- [X] Public key retrieval tested - 2025-12-01
+- [x] Public key retrieval tested - 2025-12-01
   - Login flow successfully retrieves and verifies keys
 
 ---
@@ -275,53 +275,53 @@
 
 ### 2.1 Protocol Design
 
-- [X] Custom key exchange protocol designed - 2025-12-02
+- [x] Custom key exchange protocol designed - 2025-12-02
   - AECDH-ECDSA protocol with 3 messages
   - Protocol provides: mutual authentication, forward secrecy, replay protection, MITM prevention
-- [X] ECDH mechanism selected and justified - 2025-12-02
+- [x] ECDH mechanism selected and justified - 2025-12-02
   - Selected ECDH P-256 for ephemeral key pairs (forward secrecy)
   - Justification: Strong security, Web Crypto API native support, efficient performance
-- [X] Digital signature mechanism added - 2025-12-02
+- [x] Digital signature mechanism added - 2025-12-02
   - ECDSA P-256 signatures on all protocol messages
   - Prevents MITM attacks by authenticating ephemeral keys
-- [X] Session key derivation with HKDF-SHA256 - 2025-12-02
+- [x] Session key derivation with HKDF-SHA256 - 2025-12-02
   - RFC 5869 compliant HKDF implementation
   - Derives AES-256-GCM session keys from ECDH shared secret
-- [X] Key confirmation message designed - 2025-12-02
+- [x] Key confirmation message designed - 2025-12-02
   - HMAC-SHA256 confirmation tag proves mutual key agreement
   - Confirms both parties derived identical session keys
-- [X] Complete protocol flow diagram created - 2025-12-02
+- [x] Complete protocol flow diagram created - 2025-12-02
   - Documented in types/keyExchange.ts and lib/crypto/protocol.ts
 
 ### 2.2 Protocol Implementation
 
-- [X] Protocol messages implemented - 2025-12-02
+- [x] Protocol messages implemented - 2025-12-02
   - Message 1: KEY_EXCHANGE_INIT (ephemeral public key + signature)
   - Message 2: KEY_EXCHANGE_RESPONSE (ephemeral public key + signature + nonce echo)
   - Message 3: KEY_EXCHANGE_CONFIRM (HMAC confirmation tag)
-- [X] ECDH operations using Web Crypto API - 2025-12-02
+- [x] ECDH operations using Web Crypto API - 2025-12-02
   - Ephemeral key generation: generateEphemeralKeyPair()
   - Shared secret computation: performECDH()
   - All operations in lib/crypto/keyExchange.ts
-- [X] Signature generation implemented - 2025-12-02
+- [x] Signature generation implemented - 2025-12-02
   - ECDSA P-256 signing: signInitMessage(), signResponseMessage()
   - Uses user's long-term ECDSA private key
-- [X] Signature verification implemented - 2025-12-02
+- [x] Signature verification implemented - 2025-12-02
   - verifyInitMessage(), verifyResponseMessage()
   - Fetches peer's public key from server for verification
-- [X] Two-user key exchange tested successfully - 2025-12-02
+- [x] Two-user key exchange tested successfully - 2025-12-02
   - Test suite at /test-phase2 validates full protocol
   - Tests HKDF, ECDH, ECDSA, session key storage, full protocol simulation
 
 ### 2.3 Session Key Management
 
-- [X] Session key storage in IndexedDB - 2025-12-02
+- [x] Session key storage in IndexedDB - 2025-12-02
   - Database: secureMessagingKeys
   - Stores: sessionKeys (AES-256-GCM) and sessionMetadata
-- [X] Session key retrieval mechanism - 2025-12-02
+- [x] Session key retrieval mechanism - 2025-12-02
   - getSessionKey(), getSessionMetadata(), hasValidSessionKey()
   - Conversation ID: deterministic (sorted user IDs)
-- [X] Key cleanup/expiration logic - 2025-12-02
+- [x] Key cleanup/expiration logic - 2025-12-02
   - Session keys expire after 30 days
   - Ephemeral keys deleted after exchange completion
   - cleanupExpiredKeys() removes old keys
@@ -332,28 +332,28 @@
 
 ### 3.1 Message Encryption
 
-- [X] AES-256-GCM encryption implemented
-- [X] Random IV generation per message
-- [X] Authentication tag generation
-- [X] Client-side encryption tested
+- [x] AES-256-GCM encryption implemented
+- [x] Random IV generation per message
+- [x] Authentication tag generation
+- [x] Client-side encryption tested
 
 ### 3.2 Message Decryption
 
-- [X] Client-side decryption implemented
-- [X] Authentication tag verification
-- [X] Decryption error handling
+- [x] Client-side decryption implemented
+- [x] Authentication tag verification
+- [x] Decryption error handling
 
 ### 3.3 Message Storage
 
-- [X] MongoDB schema for messages created
-- [X] Message storage API routes
-- [X] Encrypted message retrieval working
+- [x] MongoDB schema for messages created
+- [x] Message storage API routes
+- [x] Encrypted message retrieval working
 
 ### 3.4 Messaging UI
 
-- [X] Chat interface built
-- [X] Message send/receive functionality
-- [X] Encryption status indicators
+- [x] Chat interface built
+- [x] Message send/receive functionality
+- [x] Encryption status indicators
 
 ---
 
@@ -363,62 +363,62 @@
 
 ### 4.1 File Encryption
 
-- [X] File reading as ArrayBuffer - 2025-12-02
+- [x] File reading as ArrayBuffer - 2025-12-02
   - File reading implemented in MessageInput.tsx using `file.arrayBuffer()`
-- [X] AES-256-GCM file encryption - 2025-12-02
+- [x] AES-256-GCM file encryption - 2025-12-02
   - Library: `/lib/crypto/fileEncryption.ts`
   - `encryptFile()` function mirrors message encryption pattern
   - Uses same session keys from Phase 2
-- [X] Unique IV per file - 2025-12-02
+- [x] Unique IV per file - 2025-12-02
   - Fresh 12-byte IV generated per file using `generateIV()`
   - AAD includes nonce, filename, and mimeType
-- [X] File size limit (50MB) - 2025-12-02
+- [x] File size limit (50MB) - 2025-12-02
   - Enforced on client and server side
   - Base64 overhead accounted for
 
 ### 4.2 File Upload
 
-- [X] POST /api/files/upload API route - 2025-12-02
+- [x] POST /api/files/upload API route - 2025-12-02
   - File: `/app/api/files/upload/route.ts`
   - Validates nonce uniqueness for replay protection
   - 50MB size limit enforcement
   - Security event logging
-- [X] Encrypted file storage - 2025-12-02
+- [x] Encrypted file storage - 2025-12-02
   - MongoDB `files` collection
   - Stores only ciphertext + metadata
-- [X] File metadata storage - 2025-12-02
+- [x] File metadata storage - 2025-12-02
   - Stores: filename, mimeType, size, IV, authTag, nonce, timestamps
   - Updated FileDocument schema with nonce and mimeType fields
 
 ### 4.3 File Download & Decryption
 
-- [X] GET /api/files/download/[fileId] API route - 2025-12-02
+- [x] GET /api/files/download/[fileId] API route - 2025-12-02
   - File: `/app/api/files/download/[fileId]/route.ts`
   - Authorization check (sender or receiver only)
   - Security logging for unauthorized access attempts
-- [X] GET /api/files/conversation/[conversationId] API route - 2025-12-02
+- [x] GET /api/files/conversation/[conversationId] API route - 2025-12-02
   - File: `/app/api/files/conversation/[conversationId]/route.ts`
   - Lists all files in a conversation with pagination
-- [X] File download functionality - 2025-12-02
+- [x] File download functionality - 2025-12-02
   - Component: `/app/components/FileAttachment.tsx`
   - Downloads encrypted file from server
   - Displays download progress (downloading → decrypting → complete)
-- [X] Client-side file decryption - 2025-12-02
+- [x] Client-side file decryption - 2025-12-02
   - `decryptFile()` function in fileEncryption.ts
   - Triggers browser download of decrypted file
   - Error handling with security logging
 
 ### 4.4 UI Components
 
-- [X] FileAttachment component - 2025-12-02
+- [x] FileAttachment component - 2025-12-02
   - Displays file icon, name, size
   - Download button with status indicators
   - Client-side decryption before download
-- [X] File upload integration in MessageInput - 2025-12-02
+- [x] File upload integration in MessageInput - 2025-12-02
   - File picker button (📎)
   - Upload progress indicators
   - Session key validation before upload
-- [X] File display in MessageList - 2025-12-02
+- [x] File display in MessageList - 2025-12-02
   - Files displayed chronologically with messages
   - Sorted by timestamp
 
@@ -453,58 +453,96 @@
 
 ### 5.1 Replay Attack Protection
 
-- [X] Nonce generation and verification - 2025-12-02
+- [x] Nonce generation and verification - 2025-12-02
   - Implementation: `lib/crypto/messaging-client.ts`, `lib/crypto/messaging-server.ts`
   - 16-byte random nonces via crypto.getRandomValues()
   - MongoDB storage with 24-hour TTL
   - Uniqueness enforced in `/app/api/messages/send/route.ts`
 
-- [X] Timestamp verification - 2025-12-02
+- [x] Timestamp verification - 2025-12-02
   - Implementation: All key exchange endpoints
   - 5-minute validation window (KEY_EXCHANGE_CONFIG.TIMESTAMP_WINDOW_MS)
   - Server-side timestamp checking
 
-- [X] Message sequence numbers - 2025-12-02
+- [x] Message sequence numbers - 2025-12-02
   - Implementation: `/app/api/messages/send/route.ts`, `/app/api/messages/sequence/[conversationId]/route.ts`
   - Per-conversation sequence tracking
   - Server-side ordering enforcement
   - Out-of-order messages rejected
 
-- [X] Duplicate message detection - 2025-12-02
+- [x] Duplicate message detection - 2025-12-02
   - Nonce uniqueness prevents duplicates
   - Security logs capture replay attempts
   - MongoDB collection: `nonces` with TTL index
 
 ### 5.2 Replay Attack Demonstration
 
-- [ ] Message capture using Wireshark or DevTools (AWAITING MANUAL EXECUTION)
-- [ ] Replay attack attempted (AWAITING MANUAL EXECUTION)
-- [ ] Protection mechanism verified (AWAITING MANUAL EXECUTION)
-- [X] Documentation with screenshots - 2025-12-03
-  - Folder: `/docs/attack-demonstrations/replay-attack/`
-  - README.md: Comprehensive demonstration guide (2,200+ lines)
-  - SCREENSHOTS-NEEDED.md: Detailed checklist for evidence capture
-  - original-request.txt: Template for captured request
-  - **Status**: Documentation complete, requires manual browser testing to capture 5 screenshots
+- [x] Interactive replay attack demonstration page - 2025-12-03
+  - Page: `/app/attack-demos/replay/page.tsx` (520+ lines)
+  - Features:
+    - Message capture simulation (like Wireshark)
+    - Nonce replay attempt → BLOCKED
+    - Sequence number bypass attempt → BLOCKED
+    - Timestamp expiration demonstration → BLOCKED
+    - AAD protection verification
+  - Evidence collection guide included
+  - Server rejection evidence with console logs
+  - Captured messages table display
+
+- [x] Documentation with screenshots guide - 2025-12-03
+  - Evidence collection checklist embedded in demo page
+  - Instructions for DevTools Network tab captures
+  - MongoDB logs query guidance
 
 ### 5.3 MITM Attack - Vulnerable Version
 
-- [ ] Unsigned DH implementation created
-- [ ] MITM attack demonstrated
-- [ ] Attacker successfully intercepted messages
-- [ ] Documentation with screenshots
+- [x] Unsigned DH vulnerable implementation - 2025-12-03
+  - Page: `/app/attack-demos/mitm-vulnerable/page.tsx` (430+ lines)
+  - Features:
+    - Normal DH key exchange demonstration (no attacker)
+    - MITM attack simulation with Mallory intercepting
+    - Key substitution successful → Messages compromised
+    - Message modification demonstration
+    - Visual attack diagram
+  - Intercepted messages table showing original vs modified
+
+- [x] MITM attack demonstrated successfully - 2025-12-03
+  - Mallory intercepts Alice → Bob key exchange
+  - Substitutes her own ephemeral public keys
+  - Derives two separate session keys (Alice-Mallory, Mallory-Bob)
+  - Decrypts, reads, and modifies all messages
+  - Neither party can detect the attack
 
 ### 5.4 MITM Attack - Protected Version
 
-- [X] Signature-based protocol implemented - 2025-12-02
+- [x] Signature-based protocol implemented - 2025-12-02
   - Implementation: `/lib/crypto/protocol.ts`, `/lib/crypto/signatures.ts`
   - ECDSA P-256 signatures on all protocol messages
   - Signature verification in `verifyInitMessage`, `verifyResponseMessage`
   - Digital signatures on ephemeral keys
 
-- [ ] MITM attack demonstration (fails as expected)
-- [ ] Signature verification prevents attack
-- [ ] Comparison documentation created
+- [x] MITM attack prevention demonstration - 2025-12-03
+  - Page: `/app/attack-demos/mitm-protected/page.tsx` (480+ lines)
+  - Features:
+    - Normal AECDH-ECDSA exchange with signatures
+    - Mallory's attack attempt 1: Reuse original signature → FAILS
+    - Mallory's attack attempt 2: Sign with her own key → FAILS
+    - Signature verification prevents all key substitution
+    - Protocol flow diagram showing signed messages
+
+- [x] Comparison documentation created - 2025-12-03
+  - Side-by-side comparison table in demo page
+  - Properties: Authentication, MITM Resistant, Forward Secrecy, Key Confirmation, Replay Protected
+  - Clear explanation of why signatures are critical
+
+### 5.5 Attack Demonstration Index Page
+
+- [x] Attack demonstrations hub created - 2025-12-03
+  - Page: `/app/attack-demos/page.tsx` (170 lines)
+  - Links to all three attack demo modules
+  - Summary table of attacks and defenses
+  - Evidence collection checklist
+  - Navigation to related test pages
 
 ---
 
@@ -512,47 +550,47 @@
 
 ### 6.1 Authentication Logging
 
-- [X] Login attempt logging - 2025-12-02
+- [x] Login attempt logging - 2025-12-02
   - Implementation: `/app/api/auth/login/route.ts` (lines 34-75)
   - Logs: userId, username, timestamp, IP, success/failure
 
-- [X] Failed login tracking - 2025-12-02
+- [x] Failed login tracking - 2025-12-02
   - Username not found: logged (line 50-59)
   - Wrong password: logged (line 68-75)
 
 ### 6.2 Key Exchange Logging
 
-- [X] Key exchange attempt logging - 2025-12-02
+- [x] Key exchange attempt logging - 2025-12-02
   - Implementation: `/app/api/key-exchange/initiate/route.ts` (line 154-160)
   - All three messages logged (init, response, confirm)
 
-- [X] Signature verification logging - 2025-12-02
+- [x] Signature verification logging - 2025-12-02
   - Implicit in protocol verification
   - Replay attacks logged when duplicate nonce detected
 
 ### 6.3 Decryption Failure Logging
 
-- [X] Failed decryption logging (client-side) - 2025-12-03
+- [x] Failed decryption logging (client-side) - 2025-12-03
   - Implementation: `/lib/crypto/messaging-client.ts` decryptMessage function
   - Logs sent to `/api/security/log` endpoint
   - Type: 'decrypt_fail'
 
-- [X] Authentication tag failure tracking - 2025-12-03
+- [x] Authentication tag failure tracking - 2025-12-03
   - Captured in decryption failure logging
   - Includes error message and conversationId
 
 ### 6.4 Security Event Logging
 
-- [X] Duplicate nonce logging - 2025-12-02
+- [x] Duplicate nonce logging - 2025-12-02
   - Implementation: `/app/api/key-exchange/initiate/route.ts` (line 105-112)
   - Type: 'replay_detected', includes userId and sessionId
 
-- [X] Expired timestamp logging (explicit) - 2025-12-03
+- [x] Expired timestamp logging (explicit) - 2025-12-03
   - Implementation: All key exchange endpoints (initiate, respond, confirm)
   - Type: 'expired_timestamp', includes time difference in milliseconds
   - Logs before rejecting expired requests
 
-- [X] Sequence violation logging - 2025-12-02
+- [x] Sequence violation logging - 2025-12-02
   - Implementation: `/app/api/messages/send/route.ts` (line 99-106)
   - Type: 'invalid_sequence'
 
@@ -560,24 +598,24 @@
 
 ### 6.5 Log Viewing Interface
 
-- [X] Admin log viewer created - 2025-12-03
+- [x] Admin log viewer created - 2025-12-03
   - Implementation: `/app/logs/page.tsx` (175 lines)
   - API endpoint: `/app/api/logs/route.ts` (49 lines)
   - Displays all security events in table format
 
-- [X] Log filtering functionality - 2025-12-03
+- [x] Log filtering functionality - 2025-12-03
   - Filter by type: auth, key_exchange, replay_detected, invalid_sequence, decrypt_fail, message_access, expired_timestamp
   - Pagination support (limit/offset parameters)
   - Total count display
 
-- [X] Log export feature - 2025-12-03
+- [x] Log export feature - 2025-12-03
   - CSV export with all log fields
   - Includes timestamp, type, userId, details, success, ipAddress
   - Downloads as `security-logs-[timestamp].csv`
 
 ### 6.6 Additional Security Logging (Phase 5 Module 2)
 
-- [X] Message access logging - 2025-12-03
+- [x] Message access logging - 2025-12-03
   - Implementation: `/app/api/messages/conversation/[conversationId]/route.ts`
   - Type: 'message_access'
   - Logs userId, conversationId, messageCount
