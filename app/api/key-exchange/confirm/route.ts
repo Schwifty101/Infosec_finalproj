@@ -55,6 +55,18 @@ export async function POST(request: NextRequest) {
     const now = Date.now();
     const timeDiff = Math.abs(now - message.timestamp);
     if (timeDiff > KEY_EXCHANGE_CONFIG.TIMESTAMP_WINDOW_MS) {
+      // Connect to database for logging
+      const { db } = await connectToDatabase();
+
+      // Log expired timestamp
+      await db.collection(Collections.LOGS).insertOne({
+        type: 'expired_timestamp',
+        userId: message.initiatorId,
+        details: `Timestamp expired in key exchange confirm. Time diff: ${timeDiff}ms`,
+        timestamp: new Date(),
+        success: false,
+      });
+
       return NextResponse.json(
         {
           success: false,

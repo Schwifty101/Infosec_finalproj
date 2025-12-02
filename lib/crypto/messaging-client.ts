@@ -137,7 +137,8 @@ export async function decryptMessage(
   authTag: string,
   nonce: string,
   sequenceNumber: number,
-  sessionKey: CryptoKey
+  sessionKey: CryptoKey,
+  conversationId?: string
 ): Promise<string> {
   try {
     // Validate session key algorithm
@@ -189,8 +190,24 @@ export async function decryptMessage(
     });
 
     return plaintext;
-  } catch (error) {
+  } catch (error: any) {
     console.error('❌ Message decryption failed:', error);
+
+    // Log decryption failure to server
+    try {
+      await fetch('/api/security/log', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          type: 'decrypt_fail',
+          details: `Message decryption failed. Error: ${error.message}`,
+          conversationId: conversationId,
+        }),
+      });
+    } catch (logError) {
+      console.error('Failed to log decryption error:', logError);
+    }
+
     // GCM authentication failure means message was tampered or wrong key
     throw new Error(
       'Authentication failed: Message tampered or incorrect session key'

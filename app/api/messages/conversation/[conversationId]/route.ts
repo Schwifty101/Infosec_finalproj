@@ -83,6 +83,18 @@ export async function GET(
       .limit(limit)
       .toArray();
 
+    // Log message access
+    const userId = searchParams.get('userId') || userId1; // Get userId from query param or default to userId1
+    await db.collection(Collections.LOGS).insertOne({
+      type: 'message_access',
+      userId: userId,
+      conversationId: conversationId,
+      details: `User accessed conversation messages`,
+      timestamp: new Date(),
+      success: true,
+      messageCount: messages.length,
+    });
+
     // Map messages to clean format
     const formattedMessages = messages.map((msg) => ({
       _id: msg._id.toString(),
