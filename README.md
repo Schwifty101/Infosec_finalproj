@@ -9,3 +9,5 @@
 - Key management checkpoint: 22:06
 
 - ECDSA/ECDH protocol hardening
+
+- Authentication token validation checkpoint
