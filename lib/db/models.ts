@@ -12,6 +12,7 @@ export const Collections = {
   FILES: 'files',
   LOGS: 'security_logs',
   KEY_EXCHANGES: 'key_exchanges',
+  NONCES: 'nonces',
 } as const;
 
 /**
@@ -43,6 +44,10 @@ export interface MessageDocument {
   nonce: string;
   timestamp: Date;
   sequenceNumber: number;
+  delivered: boolean;
+  deliveredAt?: Date | null;
+  read: boolean;
+  readAt?: Date | null;
 }
 
 /**
@@ -74,13 +79,57 @@ export interface SecurityLogDocument {
 }
 
 /**
- * Key exchange document structure
- * Tracks key exchange operations between users
+ * Key exchange status types
+ */
+export type KeyExchangeStatus = 'initiated' | 'responded' | 'confirmed' | 'failed';
+
+/**
+ * Key exchange document structure (Phase 2 - Enhanced)
+ * Stores complete key exchange protocol state
  */
 export interface KeyExchangeDocument {
-  userId1: string;
-  userId2: string;
-  sessionKeyId: string;
-  timestamp: Date;
-  signatureVerified: boolean;
+  sessionId: string;           // UUID for unique session identification
+  userId1: string;             // Initiator user ID
+  userId2: string;             // Responder user ID
+  status: KeyExchangeStatus;   // Current status of key exchange
+
+  // Init message data
+  initMessage?: {
+    ephemeralPublicKey: string;
+    nonce: string;
+    timestamp: Date;
+    signature: string;
+  };
+
+  // Response message data
+  responseMessage?: {
+    ephemeralPublicKey: string;
+    nonce: string;
+    timestamp: Date;
+    signature: string;
+  };
+
+  // Confirmation message data
+  confirmMessage?: {
+    confirmationTag: string;
+    timestamp: Date;
+  };
+
+  // Timestamps
+  createdAt: Date;
+  updatedAt: Date;
+  completedAt?: Date;
+}
+
+/**
+ * Nonce document structure (Phase 2 - NEW)
+ * Used for replay attack prevention
+ * Nonces are unique random values that can only be used once
+ */
+export interface NonceDocument {
+  nonce: string;               // Unique nonce value (Base64)
+  userId: string;              // User who generated the nonce
+  sessionId: string;           // Associated key exchange session
+  createdAt: Date;
+  expiresAt: Date;             // TTL: 24 hours
 }
