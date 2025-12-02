@@ -52,10 +52,47 @@ export default function ChatWindow({
   const { socket, connected } = useWebSocket(currentUserId);
   const conversationId = getConversationId(currentUserId, peerUserId);
 
+  const loadMessages = useCallback(async (cursor?: string) => {
+    try {
+      setLoading(true);
+      setError('');
+
+      const url = cursor
+        ? `/api/messages/conversation/${conversationId}?before=${cursor}&limit=50`
+        : `/api/messages/conversation/${conversationId}?limit=50`;
+
+      const response = await fetch(url);
+      const data = await response.json();
+
+      if (!data.success) {
+        throw new Error(data.message || 'Failed to load messages');
+      }
+
+      // Reverse messages (API returns newest first, we want oldest first for display)
+      const reversedMessages = data.messages.reverse();
+
+      if (cursor) {
+        // Prepend older messages
+        setMessages((prev) => [...reversedMessages, ...prev]);
+      } else {
+        // Initial load
+        setMessages(reversedMessages);
+      }
+
+      setHasMore(data.hasMore);
+      console.log(`✅ Loaded ${data.messages.length} messages`);
+    } catch (err: any) {
+      console.error('Failed to load messages:', err);
+      setError(err.message || 'Failed to load messages');
+    } finally {
+      setLoading(false);
+    }
+  }, [conversationId]);
+
   // Load initial messages
   useEffect(() => {
     loadMessages();
-  }, [conversationId]);
+  }, [loadMessages]);
 
   // Set up WebSocket listeners
   useEffect(() => {
@@ -119,49 +156,12 @@ export default function ChatWindow({
     };
   }, [socket, peerUserId, currentUserId]);
 
-  const loadMessages = async (cursor?: string) => {
-    try {
-      setLoading(true);
-      setError('');
-
-      const url = cursor
-        ? `/api/messages/conversation/${conversationId}?before=${cursor}&limit=50`
-        : `/api/messages/conversation/${conversationId}?limit=50`;
-
-      const response = await fetch(url);
-      const data = await response.json();
-
-      if (!data.success) {
-        throw new Error(data.message || 'Failed to load messages');
-      }
-
-      // Reverse messages (API returns newest first, we want oldest first for display)
-      const reversedMessages = data.messages.reverse();
-
-      if (cursor) {
-        // Prepend older messages
-        setMessages((prev) => [...reversedMessages, ...prev]);
-      } else {
-        // Initial load
-        setMessages(reversedMessages);
-      }
-
-      setHasMore(data.hasMore);
-      console.log(`✅ Loaded ${data.messages.length} messages`);
-    } catch (err: any) {
-      console.error('Failed to load messages:', err);
-      setError(err.message || 'Failed to load messages');
-    } finally {
-      setLoading(false);
-    }
-  };
-
   const handleLoadMore = useCallback(
     async (cursor: string) => {
       if (!hasMore || loading) return;
       await loadMessages(cursor);
     },
-    [hasMore, loading, conversationId]
+    [hasMore, loading, loadMessages]
   );
 
   const handleMessageSent = (message: Message) => {

@@ -49,13 +49,50 @@ export async function GET(
 
     console.log(`✅ Retrieved status for key exchange session: ${sessionId} - ${session.status}`);
 
-    return NextResponse.json({
+    // Include response message if status is 'responded' (for initiator to complete exchange)
+    const responseData: any = {
       success: true,
       status: session.status,
       createdAt: session.createdAt,
       updatedAt: session.updatedAt,
       completedAt: session.completedAt,
-    } as KeyExchangeStatusResponse);
+    };
+
+    // If responded, include the response message for the initiator
+    if (session.status === 'responded' && session.responseMessage) {
+      responseData.responseMessage = {
+        messageType: 'KEY_EXCHANGE_RESPONSE',
+        sessionId: session.sessionId,
+        responderId: session.userId2,
+        initiatorId: session.userId1,
+        ephemeralPublicKey: session.responseMessage.ephemeralPublicKey,
+        nonce: session.responseMessage.nonce,
+        initiatorNonce: session.initMessage?.nonce,
+        timestamp: new Date(session.responseMessage.timestamp).getTime(),
+        signature: session.responseMessage.signature,
+      };
+    }
+
+    // If confirmed, include the confirm message for the responder
+    if (session.status === 'confirmed' && session.confirmMessage) {
+      responseData.confirmMessage = session.confirmMessage;
+      // Also include responseMessage for initiator if they're still polling
+      if (session.responseMessage) {
+        responseData.responseMessage = {
+          messageType: 'KEY_EXCHANGE_RESPONSE',
+          sessionId: session.sessionId,
+          responderId: session.userId2,
+          initiatorId: session.userId1,
+          ephemeralPublicKey: session.responseMessage.ephemeralPublicKey,
+          nonce: session.responseMessage.nonce,
+          initiatorNonce: session.initMessage?.nonce,
+          timestamp: new Date(session.responseMessage.timestamp).getTime(),
+          signature: session.responseMessage.signature,
+        };
+      }
+    }
+
+    return NextResponse.json(responseData);
   } catch (error: any) {
     console.error('❌ Error retrieving key exchange status:', error);
 

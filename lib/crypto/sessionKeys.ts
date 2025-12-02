@@ -491,3 +491,46 @@ export async function clearAllSessionKeys(): Promise<void> {
     throw new Error('Failed to clear all session keys');
   }
 }
+
+/**
+ * Get session key status between two users
+ *
+ * Helper for UI to determine what action to show:
+ * - 'exists': Valid session key exists → show "View Chat"
+ * - 'expired': Session key expired → show "Renew Exchange"
+ * - 'none': No session key → show "Start Exchange"
+ *
+ * @param myUserId - Current user ID
+ * @param peerUserId - Peer user ID
+ * @returns Promise<'exists' | 'expired' | 'none'> - Session key status
+ */
+export async function getSessionKeyStatus(
+  myUserId: string,
+  peerUserId: string
+): Promise<'exists' | 'expired' | 'none'> {
+  try {
+    // Import getConversationId from protocol to avoid circular dependency
+    const { getConversationId } = await import('./protocol');
+    const conversationId = getConversationId(myUserId, peerUserId);
+
+    // Check if valid session key exists
+    const hasValid = await hasValidSessionKey(conversationId);
+    if (hasValid) {
+      return 'exists';
+    }
+
+    // Check if there's metadata (key existed but may be expired)
+    const metadata = await getSessionMetadata(conversationId);
+    if (metadata) {
+      const now = new Date();
+      if (now > metadata.expiresAt) {
+        return 'expired';
+      }
+    }
+
+    return 'none';
+  } catch (error) {
+    console.error('❌ Failed to get session key status:', error);
+    return 'none';
+  }
+}

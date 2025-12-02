@@ -246,12 +246,18 @@ export async function createSaltFromNonces(
  * Info string provides domain separation and binds the derived key
  * to the specific users involved in the key exchange.
  *
- * @param userId1 - First user ID (initiator)
- * @param userId2 - Second user ID (responder)
+ * CRITICAL: User IDs are sorted alphabetically to ensure both parties
+ * derive the same session key regardless of who initiates.
+ *
+ * @param userId1 - First user ID
+ * @param userId2 - Second user ID
  * @returns string - Info string for HKDF
  */
 export function createHkdfInfo(userId1: string, userId2: string): string {
-  // Include protocol identifier and user IDs
+  // Sort user IDs alphabetically for consistency
+  const sorted = [userId1, userId2].sort();
+  
+  // Include protocol identifier and sorted user IDs
   // This ensures keys are bound to specific user pairs
-  return `AECDH-ECDSA-SESSION-KEY||${userId1}||${userId2}`;
+  return `AECDH-ECDSA-SESSION-KEY||${sorted[0]}||${sorted[1]}`;
 }

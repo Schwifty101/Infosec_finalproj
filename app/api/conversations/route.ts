@@ -9,6 +9,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getDatabase } from '@/lib/db/connection';
 import { Collections } from '@/lib/db/models';
+import { ObjectId } from 'mongodb';
 
 export async function GET(request: NextRequest) {
   try {
@@ -104,11 +105,26 @@ export async function GET(request: NextRequest) {
         // Determine peer user ID
         const peerUserId = userId1 === userId ? userId2 : userId1;
 
-        // Fetch peer user info
-        const peerUser = await usersCollection.findOne(
-          { _id: peerUserId },
-          { projection: { username: 1, publicKey: 1 } }
-        );
+        // Fetch peer user info - try both ObjectId and string formats
+        let peerUser = null;
+        try {
+          // First try with ObjectId
+          if (ObjectId.isValid(peerUserId)) {
+            peerUser = await usersCollection.findOne(
+              { _id: new ObjectId(peerUserId) },
+              { projection: { username: 1, publicKey: 1 } }
+            );
+          }
+          // Fallback to string match if not found
+          if (!peerUser) {
+            peerUser = await usersCollection.findOne(
+              { _id: peerUserId },
+              { projection: { username: 1, publicKey: 1 } }
+            );
+          }
+        } catch (e) {
+          console.error('Error fetching peer user:', e);
+        }
 
         return {
           conversationId,

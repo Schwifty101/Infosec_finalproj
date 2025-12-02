@@ -89,9 +89,11 @@ export async function POST(request: NextRequest) {
     const lastSeq = await getLastSequenceNumber(conversationId, senderId);
     const expectedSeq = lastSeq + 1;
 
+    console.log(`📊 Sequence validation: conversationId=${conversationId}, lastSeq=${lastSeq}, expectedSeq=${expectedSeq}, receivedSeq=${sequenceNumber}`);
+
     if (sequenceNumber !== expectedSeq) {
       console.warn(
-        `⚠️ Invalid sequence number: expected ${expectedSeq}, got ${sequenceNumber}`
+        `⚠️ Invalid sequence number: expected ${expectedSeq}, got ${sequenceNumber} for conversation ${conversationId}`
       );
 
       // Log security event

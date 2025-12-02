@@ -8,15 +8,12 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getNextSequenceNumber } from '@/lib/crypto/messaging-server';
 
-interface RouteParams {
-  params: {
-    conversationId: string;
-  };
-}
-
-export async function GET(request: NextRequest, { params }: RouteParams) {
+export async function GET(
+  request: NextRequest,
+  { params }: { params: Promise<{ conversationId: string }> }
+) {
   try {
-    const { conversationId } = params;
+    const { conversationId } = await params;
 
     if (!conversationId) {
       return NextResponse.json(
@@ -26,6 +23,8 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
     }
 
     const nextSequenceNumber = await getNextSequenceNumber(conversationId);
+
+    console.log(`📊 Sequence query: conversationId=${conversationId}, nextSequenceNumber=${nextSequenceNumber}`);
 
     return NextResponse.json({
       success: true,

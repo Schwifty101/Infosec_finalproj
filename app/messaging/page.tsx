@@ -7,10 +7,12 @@
 
 'use client';
 
-import { useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { Suspense, useEffect, useState } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import ConversationList from '@/app/components/ConversationList';
 import ChatWindow from '@/app/components/ChatWindow';
+import UserSearch from '@/app/components/UserSearch';
+import { getConversationId } from '@/lib/crypto/protocol';
 
 interface SelectedConversation {
   conversationId: string;
@@ -18,13 +20,16 @@ interface SelectedConversation {
   peerUsername: string;
 }
 
-export default function MessagingPage() {
+function MessagingContent() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [userId, setUserId] = useState<string | null>(null);
   const [username, setUsername] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [selectedConversation, setSelectedConversation] =
     useState<SelectedConversation | null>(null);
+  const [showNewChatModal, setShowNewChatModal] = useState(false);
+  const [refreshConversations, setRefreshConversations] = useState(0);
 
   useEffect(() => {
     // Check authentication
@@ -40,7 +45,33 @@ export default function MessagingPage() {
     setUserId(storedUserId);
     setUsername(storedUsername);
     setLoading(false);
-  }, [router]);
+
+    // Check if there's a peer parameter for direct navigation
+    const peerParam = searchParams.get('peer');
+    if (peerParam && storedUserId) {
+      // Fetch peer username and set conversation
+      fetchPeerAndSelectConversation(storedUserId, peerParam);
+    }
+  }, [router, searchParams]);
+
+  // Fetch peer info and select the conversation
+  const fetchPeerAndSelectConversation = async (currentUserId: string, peerUserId: string) => {
+    try {
+      const response = await fetch(`/api/keys/${peerUserId}`);
+      const data = await response.json();
+
+      if (data.success && data.username) {
+        const conversationId = getConversationId(currentUserId, peerUserId);
+        setSelectedConversation({
+          conversationId,
+          peerUserId,
+          peerUsername: data.username,
+        });
+      }
+    } catch (error) {
+      console.error('Failed to fetch peer info:', error);
+    }
+  };
 
   const handleSelectConversation = (conversation: any) => {
     setSelectedConversation({
@@ -48,6 +79,39 @@ export default function MessagingPage() {
       peerUserId: conversation.peerUserId,
       peerUsername: conversation.peerUsername,
     });
+  };
+
+  /**
+   * Handle successful key exchange from UserSearch
+   * Select the new conversation and close modal
+   */
+  const handleKeyExchangeComplete = (peerUserId: string, peerUsername: string) => {
+    if (!userId) return;
+
+    const conversationId = getConversationId(userId, peerUserId);
+    setSelectedConversation({
+      conversationId,
+      peerUserId,
+      peerUsername,
+    });
+    setShowNewChatModal(false);
+    // Trigger conversation list refresh
+    setRefreshConversations(prev => prev + 1);
+  };
+
+  /**
+   * Handle "View Chat" from UserSearch (when session already exists)
+   */
+  const handleViewChat = (peerUserId: string, peerUsername: string) => {
+    if (!userId) return;
+
+    const conversationId = getConversationId(userId, peerUserId);
+    setSelectedConversation({
+      conversationId,
+      peerUserId,
+      peerUsername,
+    });
+    setShowNewChatModal(false);
   };
 
   const handleBackToDashboard = () => {
@@ -136,6 +200,21 @@ export default function MessagingPage() {
 
         <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
           <button
+            onClick={() => setShowNewChatModal(true)}
+            style={{
+              padding: '0.5rem 1rem',
+              backgroundColor: '#28a745',
+              color: 'white',
+              border: 'none',
+              borderRadius: '4px',
+              cursor: 'pointer',
+              fontSize: '0.95rem',
+              fontWeight: '500',
+            }}
+          >
+            + New Chat
+          </button>
+          <button
             onClick={handleBackToDashboard}
             style={{
               padding: '0.5rem 1rem',
@@ -167,6 +246,7 @@ export default function MessagingPage() {
           currentUsername={username}
           selectedConversationId={selectedConversation?.conversationId || null}
           onSelectConversation={handleSelectConversation}
+          refreshKey={refreshConversations}
         />
 
         {/* Chat Window */}
@@ -216,6 +296,100 @@ export default function MessagingPage() {
         🔒 All messages are end-to-end encrypted with AES-256-GCM • Phase 3
         Complete
       </div>
+
+      {/* New Chat Modal */}
+      {showNewChatModal && (
+        <div
+          style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            backgroundColor: 'rgba(0, 0, 0, 0.5)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 1000,
+          }}
+          onClick={(e) => {
+            // Close modal when clicking backdrop
+            if (e.target === e.currentTarget) {
+              setShowNewChatModal(false);
+            }
+          }}
+        >
+          <div
+            style={{
+              backgroundColor: 'white',
+              borderRadius: '12px',
+              padding: '1.5rem',
+              width: '90%',
+              maxWidth: '500px',
+              maxHeight: '80vh',
+              overflow: 'auto',
+              boxShadow: '0 20px 60px rgba(0, 0, 0, 0.3)',
+            }}
+          >
+            <div
+              style={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                marginBottom: '1.5rem',
+              }}
+            >
+              <h2 style={{ margin: 0, fontSize: '1.3rem' }}>
+                🆕 Start New Conversation
+              </h2>
+              <button
+                onClick={() => setShowNewChatModal(false)}
+                style={{
+                  background: 'none',
+                  border: 'none',
+                  fontSize: '1.5rem',
+                  cursor: 'pointer',
+                  color: '#6c757d',
+                  padding: '0.25rem',
+                  lineHeight: 1,
+                }}
+              >
+                ✕
+              </button>
+            </div>
+
+            <p
+              style={{
+                color: '#6c757d',
+                marginBottom: '1rem',
+                fontSize: '0.95rem',
+              }}
+            >
+              Search for a user to start a secure, encrypted conversation.
+              You&apos;ll need to complete a key exchange before messaging.
+            </p>
+
+            <UserSearch
+              currentUserId={userId}
+              currentUsername={username}
+              onKeyExchangeInitiated={handleKeyExchangeComplete}
+              onViewChat={handleViewChat}
+            />
+          </div>
+        </div>
+      )}
     </main>
+  );
+}
+
+export default function MessagingPage() {
+  return (
+    <Suspense fallback={
+      <main style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: '#f8f9fa' }}>
+        <div style={{ textAlign: 'center', color: '#6c757d' }}>Loading...</div>
+      </main>
+    }>
+      <MessagingContent />
+    </Suspense>
   );
 }

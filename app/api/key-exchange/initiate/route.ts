@@ -71,6 +71,32 @@ export async function POST(request: NextRequest) {
     // Connect to database
     const { db } = await connectToDatabase();
 
+    // Check for existing active key exchange sessions (prevent parallel exchanges)
+    const keyExchangesCollection = db.collection<KeyExchangeDocument>(Collections.KEY_EXCHANGES);
+
+    const existingSession = await keyExchangesCollection.findOne({
+      $or: [
+        { userId1: message.initiatorId, userId2: message.responderId },
+        { userId1: message.responderId, userId2: message.initiatorId },
+      ],
+      status: { $in: ['initiated', 'responded'] }, // Active but not confirmed
+      createdAt: { $gte: new Date(Date.now() - 5 * 60 * 1000) }, // Within 5 min
+    });
+
+    if (existingSession) {
+      console.log('⚠️ Active key exchange already exists:', existingSession.sessionId);
+
+      return NextResponse.json(
+        {
+          success: false,
+          message: 'Active key exchange already in progress between these users. ' +
+            'Please wait for current exchange to complete or expire.',
+          existingSessionId: existingSession.sessionId,
+        } as InitiateKeyExchangeResponse,
+        { status: 409 } // Conflict
+      );
+    }
+
     // Check nonce uniqueness (replay protection)
     const noncesCollection = db.collection<NonceDocument>(Collections.NONCES);
     const existingNonce = await noncesCollection.findOne({ nonce: message.nonce });
@@ -107,8 +133,6 @@ export async function POST(request: NextRequest) {
     } as NonceDocument);
 
     // Store key exchange session
-    const keyExchangesCollection = db.collection<KeyExchangeDocument>(Collections.KEY_EXCHANGES);
-
     const keyExchangeDoc: KeyExchangeDocument = {
       sessionId: message.sessionId,
       userId1: message.initiatorId,

@@ -12,7 +12,7 @@
 
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { decryptMessage } from '@/lib/crypto/messaging-client';
 import { getSessionKey } from '@/lib/crypto/sessionKeys';
 import { getConversationId } from '@/lib/crypto/keyExchange';
@@ -43,6 +43,7 @@ interface Props {
   currentUsername: string;
   selectedConversationId: string | null;
   onSelectConversation: (conversation: Conversation) => void;
+  refreshKey?: number; // Increment to trigger refresh
 }
 
 export default function ConversationList({
@@ -50,11 +51,39 @@ export default function ConversationList({
   currentUsername,
   selectedConversationId,
   onSelectConversation,
+  refreshKey,
 }: Props) {
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [decryptedPreviews, setDecryptedPreviews] = useState<Record<string, string>>({});
+
+  const fetchConversations = useCallback(async () => {
+    try {
+      const response = await fetch(
+        `/api/conversations?userId=${currentUserId}`,
+        {
+          headers: {
+            'x-user-id': currentUserId,
+          },
+        }
+      );
+
+      const data = await response.json();
+
+      if (!data.success) {
+        throw new Error(data.message || 'Failed to load conversations');
+      }
+
+      setConversations(data.conversations);
+      setError('');
+    } catch (err: any) {
+      console.error('Failed to load conversations:', err);
+      setError(err.message || 'Failed to load conversations');
+    } finally {
+      setLoading(false);
+    }
+  }, [currentUserId]);
 
   useEffect(() => {
     fetchConversations();
@@ -63,7 +92,7 @@ export default function ConversationList({
     const interval = setInterval(fetchConversations, 10000);
 
     return () => clearInterval(interval);
-  }, [currentUserId]);
+  }, [fetchConversations, refreshKey]);
 
   useEffect(() => {
     // Decrypt last message previews
@@ -97,34 +126,7 @@ export default function ConversationList({
         }));
       }
     });
-  }, [conversations]);
-
-  const fetchConversations = async () => {
-    try {
-      const response = await fetch(
-        `/api/conversations?userId=${currentUserId}`,
-        {
-          headers: {
-            'x-user-id': currentUserId,
-          },
-        }
-      );
-
-      const data = await response.json();
-
-      if (!data.success) {
-        throw new Error(data.message || 'Failed to load conversations');
-      }
-
-      setConversations(data.conversations);
-      setError('');
-    } catch (err: any) {
-      console.error('Failed to load conversations:', err);
-      setError(err.message || 'Failed to load conversations');
-    } finally {
-      setLoading(false);
-    }
-  };
+  }, [conversations, currentUserId, decryptedPreviews]);
 
   const formatTimestamp = (timestamp: Date) => {
     const date = new Date(timestamp);

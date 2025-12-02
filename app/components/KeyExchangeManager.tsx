@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import {
   initiateKeyExchange,
   handleKeyExchangeInit,
@@ -15,11 +16,7 @@ import type {
   ConfirmKeyExchangeRequest,
 } from '@/types';
 import { KEY_EXCHANGE_CONFIG } from '@/types/keyExchange';
-
-interface User {
-  _id: string;
-  username: string;
-}
+import UserSearch from './UserSearch';
 
 interface Props {
   currentUserId: string;
@@ -37,22 +34,22 @@ interface Props {
  * - Polling for pending requests
  */
 export default function KeyExchangeManager({ currentUserId, currentUsername }: Props) {
-  const [users, setUsers] = useState<User[]>([]);
+  const router = useRouter();
   const [pendingRequests, setPendingRequests] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [successMessage, setSuccessMessage] = useState('');
   const [processingSessionId, setProcessingSessionId] = useState<string | null>(null);
 
-  // Fetch all users
-  const fetchUsers = async () => {
-    try {
-      // In a real app, you'd have an API endpoint to list users
-      // For now, we'll just show a placeholder
-      setUsers([]);
-    } catch (err) {
-      console.error('Failed to fetch users:', err);
-    }
+  /**
+   * Handle successful key exchange initiation
+   * Auto-redirect to messaging page
+   */
+  const handleKeyExchangeComplete = (peerUserId: string, peerUsername: string) => {
+    setSuccessMessage(`🔒 Secure session established with ${peerUsername}! Redirecting to messaging...`);
+    setTimeout(() => {
+      router.push(`/messaging?peer=${peerUserId}`);
+    }, 1500);
   };
 
   // Fetch pending key exchange requests
@@ -72,7 +69,6 @@ export default function KeyExchangeManager({ currentUserId, currentUsername }: P
 
   // Poll for pending requests every 10 seconds
   useEffect(() => {
-    fetchUsers();
     fetchPendingRequests();
 
     const interval = setInterval(() => {
@@ -82,48 +78,6 @@ export default function KeyExchangeManager({ currentUserId, currentUsername }: P
     return () => clearInterval(interval);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentUserId]);
-
-  // Initiate key exchange with a user
-  const handleInitiateKeyExchange = async (peerUserId: string, peerUsername: string) => {
-    setLoading(true);
-    setError('');
-    setSuccessMessage('');
-
-    try {
-      console.log('🔐 Initiating key exchange with', peerUsername);
-
-      // Step 1: Generate init message (client-side)
-      const initMessage = await initiateKeyExchange(currentUserId, peerUserId);
-
-      // Step 2: Send init message to server
-      const response = await fetch('/api/key-exchange/initiate', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          message: initMessage,
-        } as InitiateKeyExchangeRequest),
-      });
-
-      const data = await response.json();
-
-      if (!data.success) {
-        throw new Error(data.message);
-      }
-
-      setSuccessMessage(`Key exchange initiated with ${peerUsername}. Waiting for response...`);
-      console.log('✅ Key exchange initiated successfully');
-
-      // Poll for response (in a real app, you'd use WebSocket or polling)
-      setTimeout(() => {
-        setSuccessMessage('');
-      }, 5000);
-    } catch (err: any) {
-      console.error('❌ Key exchange initiation failed:', err);
-      setError(err.message || 'Failed to initiate key exchange');
-    } finally {
-      setLoading(false);
-    }
-  };
 
   // Accept a pending key exchange request
   const handleAcceptRequest = async (request: any) => {
@@ -141,6 +95,38 @@ export default function KeyExchangeManager({ currentUserId, currentUsername }: P
 
       if (!keyData.success || !keyData.publicKey) {
         throw new Error('Failed to retrieve initiator public key');
+      }
+
+      // TOFU: Validate public key
+      const { validatePublicKey, storeKeyFingerprint, formatFingerprint } =
+        await import('@/lib/crypto/keyValidation');
+
+      const validation = await validatePublicKey(request.fromUserId, keyData.publicKey);
+
+      if (!validation.valid) {
+        // Key changed - potential MITM!
+        const confirmChange = confirm(
+          `⚠️ WARNING: ${request.fromUsername}'s public key has changed!\n\n` +
+          `${validation.reason}\n\n` +
+          `New Fingerprint: ${formatFingerprint(validation.fingerprint)}\n\n` +
+          `This could indicate a Man-in-the-Middle attack. Only proceed if you've ` +
+          `verified this change with ${request.fromUsername} through a secure channel ` +
+          `(phone call, in person, etc.).\n\n` +
+          `Do you want to proceed anyway?`
+        );
+
+        if (!confirmChange) {
+          throw new Error('Key exchange rejected due to public key change');
+        }
+
+        // User accepted - update fingerprint
+        await storeKeyFingerprint(request.fromUserId, keyData.publicKey, validation.fingerprint);
+      }
+
+      if (validation.isFirstSeen) {
+        console.log('First exchange with user - storing fingerprint:',
+          formatFingerprint(validation.fingerprint));
+        await storeKeyFingerprint(request.fromUserId, keyData.publicKey, validation.fingerprint);
       }
 
       // Step 2: Handle init message and generate response (client-side)
@@ -165,16 +151,71 @@ export default function KeyExchangeManager({ currentUserId, currentUsername }: P
         throw new Error(data.message);
       }
 
-      setSuccessMessage(`Key exchange accepted with ${request.fromUsername}. Waiting for confirmation...`);
-      console.log('✅ Key exchange response sent successfully');
+      console.log('✅ Key exchange response sent, waiting for confirmation...');
 
-      // Remove from pending requests
-      setPendingRequests((prev) => prev.filter((r) => r.sessionId !== request.sessionId));
+      // Poll for confirmation
+      const sessionId = request.sessionId;
+      const pollInterval = 2000; // 2 seconds
+      const maxAttempts = 150; // 5 minutes
+      let attempts = 0;
 
-      // Clear message after delay
+      const pollForConfirmation = async (): Promise<boolean> => {
+        while (attempts < maxAttempts) {
+          attempts++;
+
+          try {
+            const statusResponse = await fetch(`/api/key-exchange/status/${sessionId}`);
+            if (!statusResponse.ok) {
+              await new Promise(resolve => setTimeout(resolve, pollInterval));
+              continue;
+            }
+
+            const statusData = await statusResponse.json();
+
+            if (statusData.status === 'confirmed' && statusData.confirmMessage) {
+              console.log('📥 Received confirmation, verifying HMAC...');
+
+              // Verify confirmation tag
+              const confirmValid = await handleKeyExchangeConfirm(
+                statusData.confirmMessage,
+                currentUserId
+              );
+
+              if (!confirmValid) {
+                throw new Error('Confirmation tag verification failed - possible MITM!');
+              }
+
+              console.log('✅ Confirmation verified! Session key confirmed identical.');
+              return true;
+            }
+
+            if (statusData.status === 'failed' || statusData.status === 'rejected') {
+              throw new Error('Key exchange rejected or failed');
+            }
+
+            await new Promise(resolve => setTimeout(resolve, pollInterval));
+          } catch (pollError) {
+            console.error('Polling error:', pollError);
+            await new Promise(resolve => setTimeout(resolve, pollInterval));
+          }
+        }
+
+        return false;
+      };
+
+      const confirmed = await pollForConfirmation();
+
+      if (!confirmed) {
+        throw new Error('Confirmation timeout - initiator did not complete within 5 minutes');
+      }
+
+      // Success - redirect to messaging
+      setSuccessMessage(`🔒 Secure session established with ${request.fromUsername}!`);
+      setPendingRequests(prev => prev.filter(r => r.sessionId !== request.sessionId));
+
       setTimeout(() => {
-        setSuccessMessage('');
-      }, 5000);
+        router.push(`/messaging?peer=${request.fromUserId}`);
+      }, 1500);
     } catch (err: any) {
       console.error('❌ Failed to accept key exchange:', err);
       setError(err.message || 'Failed to accept key exchange request');
@@ -222,6 +263,19 @@ export default function KeyExchangeManager({ currentUserId, currentUsername }: P
           {successMessage}
         </div>
       )}
+
+      {/* User Search Section */}
+      <div style={{ marginBottom: '2rem' }}>
+        <h3>🔍 Find Users to Chat With</h3>
+        <p style={{ color: '#666', marginBottom: '1rem' }}>
+          Search for users by username to start a secure conversation
+        </p>
+        <UserSearch
+          currentUserId={currentUserId}
+          currentUsername={currentUsername}
+          onKeyExchangeInitiated={handleKeyExchangeComplete}
+        />
+      </div>
 
       {/* Pending Requests Section */}
       <div style={{ marginBottom: '2rem' }}>

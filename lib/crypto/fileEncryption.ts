@@ -87,7 +87,7 @@ export async function encryptFile(
     const encrypted = await crypto.subtle.encrypt(
       {
         name: 'AES-GCM',
-        iv: iv,
+        iv: iv as Uint8Array<ArrayBuffer>,
         additionalData: aad,
         tagLength: 128, // 16 bytes auth tag
       },
@@ -102,9 +102,9 @@ export async function encryptFile(
 
     // Convert to Base64 for transport
     const result: EncryptedFile = {
-      ciphertext: arrayBufferToBase64(ciphertextArray.buffer),
-      iv: arrayBufferToBase64(iv.buffer),
-      authTag: arrayBufferToBase64(authTagArray.buffer),
+      ciphertext: arrayBufferToBase64(ciphertextArray.buffer as ArrayBuffer),
+      iv: arrayBufferToBase64(iv.buffer as ArrayBuffer),
+      authTag: arrayBufferToBase64(authTagArray.buffer as ArrayBuffer),
       nonce,
       filename,
       mimeType,
@@ -186,7 +186,7 @@ export async function decryptFile(
         tagLength: 128,
       },
       sessionKey,
-      combined.buffer
+      combined.buffer as ArrayBuffer
     );
 
     console.log('✅ File decrypted successfully', {

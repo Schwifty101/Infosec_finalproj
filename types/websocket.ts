@@ -128,7 +128,7 @@ export interface WebSocketEvents {
   'message:send': MessageSendEvent;
   'typing:start': { receiverId: string };
   'typing:stop': { receiverId: string };
-  'message:read': { messageId: string; senderId: string };
+  'message:mark-read': { messageId: string; senderId: string };
   'status:check': StatusCheckEvent;
 
   // Server -> Client

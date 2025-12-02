@@ -7,7 +7,7 @@
 
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { decryptMessage } from '@/lib/crypto/messaging-client';
 import { getSessionKey } from '@/lib/crypto/sessionKeys';
 import { getConversationId } from '@/lib/crypto/keyExchange';
@@ -39,11 +39,7 @@ export default function MessageBubble({ message, currentUserId, peerUserId }: Pr
 
   const isSent = message.senderId === currentUserId;
 
-  useEffect(() => {
-    decryptAndDisplay();
-  }, [message]);
-
-  const decryptAndDisplay = async () => {
+  const decryptAndDisplay = useCallback(async () => {
     try {
       setDecrypting(true);
       setError(false);
@@ -76,25 +72,30 @@ export default function MessageBubble({ message, currentUserId, peerUserId }: Pr
       setDecrypting(false);
     } catch (err: any) {
       console.error('Message decryption failed:', err);
-      setPlaintext('[Decryption failed - Message may be tampered]');
+      // More helpful error message explaining potential causes
+      setPlaintext('[🔒 Unable to decrypt - Session key may have changed]');
       setError(true);
       setDecrypting(false);
 
-      // Log security event
+      // Log security event (don't await - fire and forget)
       fetch('/api/security/log', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           type: 'decrypt_fail',
           messageId: message._id,
-          details: 'Message authentication failed',
+          details: 'Message decryption failed - possible key rotation or tampering',
           timestamp: new Date(),
         }),
       }).catch(() => {
-        // Non-fatal
+        // Non-fatal - ignore errors
       });
     }
-  };
+  }, [message, currentUserId, peerUserId]);
+
+  useEffect(() => {
+    decryptAndDisplay();
+  }, [decryptAndDisplay]);
 
   const formatTimestamp = (timestamp: Date) => {
     const date = new Date(timestamp);

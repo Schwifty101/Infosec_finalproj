@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { connectDB } from '@/lib/db/mongodb';
-import { User } from '@/lib/db/models';
+import { getDatabase } from '@/lib/db/connection';
 import { ObjectId } from 'mongodb';
 
 /**
@@ -39,7 +38,7 @@ export async function GET(request: NextRequest) {
     }
 
     // Connect to database
-    const db = await connectDB();
+    const db = await getDatabase();
 
     // Validate current user exists
     const currentUser = await db.collection('users').findOne({
@@ -83,8 +82,8 @@ export async function GET(request: NextRequest) {
         searchQuery: query,
         resultsCount: formattedUsers.length,
         ip: request.headers.get('x-forwarded-for') ||
-            request.headers.get('x-real-ip') ||
-            'unknown'
+          request.headers.get('x-real-ip') ||
+          'unknown'
       },
       timestamp: new Date(),
       success: true
@@ -101,7 +100,7 @@ export async function GET(request: NextRequest) {
 
     // Log security error
     try {
-      const db = await connectDB();
+      const db = await getDatabase();
       await db.collection('security_logs').insertOne({
         type: 'user_search_error',
         details: {
