@@ -527,8 +527,14 @@
 
 ### 6.3 Decryption Failure Logging
 
-- [ ] Failed decryption logging (client-side)
-- [ ] Authentication tag failure tracking
+- [X] Failed decryption logging (client-side) - 2025-12-03
+  - Implementation: `/lib/crypto/messaging-client.ts` decryptMessage function
+  - Logs sent to `/api/security/log` endpoint
+  - Type: 'decrypt_fail'
+
+- [X] Authentication tag failure tracking - 2025-12-03
+  - Captured in decryption failure logging
+  - Includes error message and conversationId
 
 ### 6.4 Security Event Logging
 
@@ -536,7 +542,11 @@
   - Implementation: `/app/api/key-exchange/initiate/route.ts` (line 105-112)
   - Type: 'replay_detected', includes userId and sessionId
 
-- [ ] Expired timestamp logging (explicit)
+- [X] Expired timestamp logging (explicit) - 2025-12-03
+  - Implementation: All key exchange endpoints (initiate, respond, confirm)
+  - Type: 'expired_timestamp', includes time difference in milliseconds
+  - Logs before rejecting expired requests
+
 - [X] Sequence violation logging - 2025-12-02
   - Implementation: `/app/api/messages/send/route.ts` (line 99-106)
   - Type: 'invalid_sequence'
@@ -545,9 +555,27 @@
 
 ### 6.5 Log Viewing Interface
 
-- [ ] Admin log viewer created
-- [ ] Log filtering functionality
-- [ ] Log export feature
+- [X] Admin log viewer created - 2025-12-03
+  - Implementation: `/app/logs/page.tsx` (175 lines)
+  - API endpoint: `/app/api/logs/route.ts` (49 lines)
+  - Displays all security events in table format
+
+- [X] Log filtering functionality - 2025-12-03
+  - Filter by type: auth, key_exchange, replay_detected, invalid_sequence, decrypt_fail, message_access, expired_timestamp
+  - Pagination support (limit/offset parameters)
+  - Total count display
+
+- [X] Log export feature - 2025-12-03
+  - CSV export with all log fields
+  - Includes timestamp, type, userId, details, success, ipAddress
+  - Downloads as `security-logs-[timestamp].csv`
+
+### 6.6 Additional Security Logging (Phase 5 Module 2)
+
+- [X] Message access logging - 2025-12-03
+  - Implementation: `/app/api/messages/conversation/[conversationId]/route.ts`
+  - Type: 'message_access'
+  - Logs userId, conversationId, messageCount
 
 ---
 
