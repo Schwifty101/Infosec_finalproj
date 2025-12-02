@@ -6,11 +6,18 @@ interface SecurityLog {
   _id: string;
   type: string;
   userId?: string;
-  details: string;
+  details: string | Record<string, unknown>;
   timestamp: string;
   success?: boolean;
   ipAddress?: string;
 }
+
+const formatDetails = (details: string | Record<string, unknown>): string => {
+  if (typeof details === 'string') return details;
+  return Object.entries(details)
+    .map(([key, value]) => `${key}: ${value}`)
+    .join(', ');
+};
 
 export default function LogsPage() {
   const [logs, setLogs] = useState<SecurityLog[]>([]);
@@ -50,7 +57,7 @@ export default function LogsPage() {
       new Date(log.timestamp).toISOString(),
       log.type,
       log.userId || '',
-      log.details,
+      formatDetails(log.details),
       log.success !== undefined ? log.success.toString() : '',
       log.ipAddress || '',
     ]);
@@ -138,7 +145,9 @@ export default function LogsPage() {
                 <td style={{ padding: '0.75rem', fontSize: '0.875rem' }}>
                   {log.userId ? log.userId.substring(0, 8) + '...' : '-'}
                 </td>
-                <td style={{ padding: '0.75rem', fontSize: '0.875rem' }}>{log.details}</td>
+                <td style={{ padding: '0.75rem', fontSize: '0.875rem' }}>
+                  {formatDetails(log.details)}
+                </td>
                 <td style={{ padding: '0.75rem' }}>
                   {log.success !== undefined ? (
                     <span

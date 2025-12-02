@@ -477,10 +477,15 @@
 
 ### 5.2 Replay Attack Demonstration
 
-- [ ] Message capture using Wireshark or DevTools
-- [ ] Replay attack attempted
-- [ ] Protection mechanism verified
-- [ ] Documentation with screenshots
+- [ ] Message capture using Wireshark or DevTools (AWAITING MANUAL EXECUTION)
+- [ ] Replay attack attempted (AWAITING MANUAL EXECUTION)
+- [ ] Protection mechanism verified (AWAITING MANUAL EXECUTION)
+- [X] Documentation with screenshots - 2025-12-03
+  - Folder: `/docs/attack-demonstrations/replay-attack/`
+  - README.md: Comprehensive demonstration guide (2,200+ lines)
+  - SCREENSHOTS-NEEDED.md: Detailed checklist for evidence capture
+  - original-request.txt: Template for captured request
+  - **Status**: Documentation complete, requires manual browser testing to capture 5 screenshots
 
 ### 5.3 MITM Attack - Vulnerable Version
 
