@@ -7,3 +7,5 @@
 - Authentication flow security audit
 
 ### Security Implementation Note - Dec 02, 21:36
+
+- MongoDB schema validation milestone
