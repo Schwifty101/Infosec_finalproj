@@ -22,6 +22,10 @@ export interface IMessage {
   nonce: string;
   timestamp: Date;
   sequenceNumber: number;
+  delivered: boolean;
+  deliveredAt?: Date | null;
+  read: boolean;
+  readAt?: Date | null;
 }
 
 // File types
@@ -78,3 +82,9 @@ export interface IKeyRetrieveResponse extends IApiResponse {
   publicKey?: string;
   username?: string;
 }
+
+// Export all key exchange types from keyExchange.ts
+export * from './keyExchange';
+
+// Export all WebSocket event types from websocket.ts
+export * from './websocket';

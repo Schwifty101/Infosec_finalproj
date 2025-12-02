@@ -82,7 +82,7 @@ export function generateIV(): Uint8Array {
  */
 export function generateNonce(): string {
   const nonce = generateRandomBytes(16);
-  return arrayBufferToBase64(nonce.buffer);
+  return arrayBufferToBase64(nonce.buffer as ArrayBuffer);
 }
 
 /**

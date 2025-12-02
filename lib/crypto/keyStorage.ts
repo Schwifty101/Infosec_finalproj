@@ -9,12 +9,14 @@
  */
 
 const DB_NAME = 'secureMessagingKeys';
-const DB_VERSION = 1;
+const DB_VERSION = 2; // Updated to v2 for Phase 2 compatibility
 const STORE_NAME = 'privateKeys';
+const SESSION_KEYS_STORE = 'sessionKeys';
+const EPHEMERAL_KEYS_STORE = 'ephemeralKeys';
 
 /**
  * Initialize IndexedDB database
- * Creates object store for private keys if it doesn't exist
+ * Creates object stores for all key types (Phase 1 + Phase 2)
  */
 function initDB(): Promise<IDBDatabase> {
   return new Promise((resolve, reject) => {
@@ -30,11 +32,27 @@ function initDB(): Promise<IDBDatabase> {
 
     request.onupgradeneeded = (event) => {
       const db = (event.target as IDBOpenDBRequest).result;
+      const oldVersion = event.oldVersion;
 
-      // Create object store if it doesn't exist
+      console.log(`📦 Upgrading IndexedDB from version ${oldVersion} to ${DB_VERSION}`);
+
+      // Create privateKeys store if it doesn't exist (Phase 1)
       if (!db.objectStoreNames.contains(STORE_NAME)) {
         db.createObjectStore(STORE_NAME, { keyPath: 'userId' });
-        console.log('✅ IndexedDB object store created');
+        console.log('✅ Created privateKeys object store');
+      }
+
+      // Create sessionKeys store (Phase 2)
+      if (!db.objectStoreNames.contains(SESSION_KEYS_STORE)) {
+        db.createObjectStore(SESSION_KEYS_STORE, { keyPath: 'conversationId' });
+        console.log('✅ Created sessionKeys object store');
+      }
+
+      // Create ephemeralKeys store (Phase 2)
+      if (!db.objectStoreNames.contains(EPHEMERAL_KEYS_STORE)) {
+        const ephemeralStore = db.createObjectStore(EPHEMERAL_KEYS_STORE, { keyPath: 'sessionId' });
+        ephemeralStore.createIndex('expiresAt', 'expiresAt', { unique: false });
+        console.log('✅ Created ephemeralKeys object store');
       }
     };
   });

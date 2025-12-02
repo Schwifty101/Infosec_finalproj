@@ -1,0 +1,29 @@
+# Original Request - Replay Attack Demonstration
+
+## Instructions
+Replace this file with the actual captured request from browser DevTools.
+
+## How to Capture
+1. Open browser DevTools (F12) → Network tab
+2. Send a message in the application
+3. Find POST /api/messages/send request
+4. Right-click → Copy → Copy as fetch
+5. Paste the captured request here
+
+## Example Format
+
+```javascript
+fetch("http://localhost:3000/api/messages/send", {
+  "headers": {
+    "accept": "*/*",
+    "content-type": "application/json",
+  },
+  "body": "{\"conversationId\":\"alice_bob\",\"senderId\":\"alice123\",\"receiverId\":\"bob456\",\"ciphertext\":\"...\",\"iv\":\"...\",\"authTag\":\"...\",\"nonce\":\"8a7f3e2d1c9b0a5e4f6d8c7b9a0e1f2d\",\"sequenceNumber\":1,\"timestamp\":1733270400000}",
+  "method": "POST"
+});
+```
+
+## Critical Field
+The **nonce** field is the key to this demonstration:
+- First request: Server accepts and stores nonce
+- Replay request: Server rejects due to duplicate nonce
