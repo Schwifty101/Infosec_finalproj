@@ -10,6 +10,7 @@
 
 import { useRef, useEffect, useState } from 'react';
 import MessageBubble from './MessageBubble';
+import FileAttachment from './FileAttachment';
 
 interface Message {
   _id: string;
@@ -23,6 +24,17 @@ interface Message {
   timestamp: Date;
   delivered?: boolean;
   read?: boolean;
+}
+
+interface FileItem {
+  _id: string;
+  filename: string;
+  mimeType: string;
+  size: number;
+  senderId: string;
+  receiverId: string;
+  uploadedAt: Date;
+  delivered?: boolean;
 }
 
 interface Props {
@@ -46,7 +58,28 @@ export default function MessageList({
   const bottomRef = useRef<HTMLDivElement>(null);
   const [loadingMore, setLoadingMore] = useState(false);
   const [isAtBottom, setIsAtBottom] = useState(true);
+  const [files, setFiles] = useState<FileItem[]>([]);
   const previousScrollHeight = useRef(0);
+
+  // Fetch files for this conversation
+  useEffect(() => {
+    const fetchFiles = async () => {
+      try {
+        const response = await fetch(
+          `/api/files/conversation/${conversationId}`
+        );
+        const data = await response.json();
+
+        if (data.success) {
+          setFiles(data.files);
+        }
+      } catch (error) {
+        console.error('Failed to fetch files:', error);
+      }
+    };
+
+    fetchFiles();
+  }, [conversationId]);
 
   // Scroll to bottom on initial load or new messages (when already at bottom)
   useEffect(() => {
@@ -159,7 +192,7 @@ export default function MessageList({
       )}
 
       {/* Empty state */}
-      {messages.length === 0 && (
+      {messages.length === 0 && files.length === 0 && (
         <div
           style={{
             flex: 1,
@@ -183,15 +216,63 @@ export default function MessageList({
         </div>
       )}
 
-      {/* Messages */}
-      {messages.map((message) => (
-        <MessageBubble
-          key={message._id}
-          message={message}
-          currentUserId={currentUserId}
-          peerUserId={peerUserId}
-        />
-      ))}
+      {/* Messages and Files (sorted chronologically) */}
+      {(() => {
+        // Combine messages and files with type tags
+        const items = [
+          ...messages.map((m) => ({
+            type: 'message' as const,
+            timestamp: new Date(m.timestamp),
+            data: m,
+          })),
+          ...files.map((f) => ({
+            type: 'file' as const,
+            timestamp: new Date(f.uploadedAt),
+            data: f,
+          })),
+        ];
+
+        // Sort by timestamp (oldest first)
+        items.sort((a, b) => a.timestamp.getTime() - b.timestamp.getTime());
+
+        return items.map((item, index) => {
+          if (item.type === 'message') {
+            return (
+              <MessageBubble
+                key={`msg-${item.data._id}`}
+                message={item.data}
+                currentUserId={currentUserId}
+                peerUserId={peerUserId}
+              />
+            );
+          } else {
+            return (
+              <div
+                key={`file-${item.data._id}`}
+                style={{
+                  display: 'flex',
+                  justifyContent:
+                    item.data.senderId === currentUserId
+                      ? 'flex-end'
+                      : 'flex-start',
+                  padding: '0.25rem 1rem',
+                }}
+              >
+                <FileAttachment
+                  fileId={item.data._id}
+                  filename={item.data.filename}
+                  mimeType={item.data.mimeType}
+                  size={item.data.size}
+                  uploadedAt={item.data.uploadedAt}
+                  senderId={item.data.senderId}
+                  currentUserId={currentUserId}
+                  conversationId={conversationId}
+                />
+              </div>
+            );
+          }
+        });
+      })()}
 
       {/* Scroll anchor */}
       <div ref={bottomRef} />

@@ -356,7 +356,7 @@ export default function TestPhase3Page() {
             const iv1 = generateIV();
             const iv2 = generateIV();
             addResult(`✅ IV length: ${iv1.byteLength} bytes (expected: 12)`);
-            addResult(`   IVs are unique: ${arrayBufferToBase64(iv1.buffer) !== arrayBufferToBase64(iv2.buffer) ? 'YES ✓' : 'NO ✗'}`);
+            addResult(`   IVs are unique: ${arrayBufferToBase64(iv1.buffer as ArrayBuffer) !== arrayBufferToBase64(iv2.buffer as ArrayBuffer) ? 'YES ✓' : 'NO ✗'}`);
 
             // Test 5.2: Nonce generation
             addResult('Testing generateNonce...');

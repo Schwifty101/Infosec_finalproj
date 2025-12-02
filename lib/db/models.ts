@@ -61,8 +61,12 @@ export interface FileDocument {
   ciphertext: string;
   iv: string;
   authTag: string;
-  size: number;
+  nonce: string;             // Replay protection (16 bytes Base64)
+  mimeType: string;          // File MIME type for proper decryption/download
+  size: number;              // Original file size in bytes
   uploadedAt: Date;
+  delivered: boolean;
+  deliveredAt?: Date | null;
 }
 
 /**
