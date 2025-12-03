@@ -17,3 +17,5 @@
 - AES-GCM cipher optimization reviewed
 
 - Key exchange protocol verified
+
+- ECDSA signature testing completed
