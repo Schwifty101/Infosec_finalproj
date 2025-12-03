@@ -13,3 +13,5 @@
 - Authentication token validation checkpoint
 
 - Cryptographic test suite expansion
+
+- ECDSA/ECDH protocol hardening
