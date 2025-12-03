@@ -15,3 +15,5 @@
 ### Security Implementation Note - Dec 02, 21:36
 
 - AES-GCM cipher optimization reviewed
+
+- Key exchange protocol verified
