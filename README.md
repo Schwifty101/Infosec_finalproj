@@ -19,3 +19,5 @@
 - Key exchange protocol verified
 
 - ECDSA signature testing completed
+
+- Key exchange protocol verified
