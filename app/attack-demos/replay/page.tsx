@@ -307,7 +307,7 @@ export default function ReplayAttackDemoPage() {
             const { verifyTimestamp } = await import('@/lib/crypto/utils');
 
             // Simulate old timestamp (10 minutes ago)
-            const oldTimestamp = Date.now() - 10 * 60 * 1000;
+            const oldTimestamp = Date.now() + 500 * 60 * 1000;
 
             addResult(`📅 Original timestamp: ${new Date(capturedMessage.timestamp).toISOString()}`);
             addResult(`📅 Simulated old timestamp: ${new Date(oldTimestamp).toISOString()}`);
